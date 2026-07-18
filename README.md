@@ -8,7 +8,7 @@ logic, built on `libcurl` + `nlohmann/json` + `OpenSSL`.
 ## Quickstart
 
 ```cpp
-#include <sendafrica/sendafrica.hpp>
+#include <sendafrica/client.hpp>
 
 int main() {
     sendafrica::Client client("sk_live_xxxxx");
@@ -53,58 +53,112 @@ All errors derive from `sendafrica::Error` (`AuthenticationError`,
 `RateLimitError`, `NotFoundError`, `ServerError`, `ConnectionError`,
 `WebhookSignatureError`).
 
-## Building it yourself
+## Installation
 
-Dependencies: a C++17 compiler, CMake >= 3.16, `libcurl`, `OpenSSL`.
-`nlohmann/json` is auto-fetched via CMake `FetchContent` if not already
-installed on the system.
+### 1. CMake FetchContent (recommended)
 
-```bash
-# Debian/Ubuntu
-apt-get install cmake libcurl4-openssl-dev libssl-dev nlohmann-json3-dev
-
-mkdir build && cd build
-cmake -DSENDAFRICA_BUILD_TESTS=ON -DSENDAFRICA_BUILD_EXAMPLES=ON ..
-make -j
-./tests/sendafrica_tests    # all checks passed
-```
-
-## Installation for downstream projects
-
-### Option A — FetchContent (recommended)
+No package manager needed. CMake pulls the source and builds it alongside
+your project.
 
 ```cmake
 include(FetchContent)
 FetchContent_Declare(sendafrica
     GIT_REPOSITORY https://github.com/SendAfrica/SendAfrica-cpp-sdk.git
-    GIT_TAG v1.0.0
+    GIT_TAG v1.0.1
 )
 FetchContent_MakeAvailable(sendafrica)
 target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
 ```
 
-### Option B — cmake --install
+### 2. vcpkg
 
 ```bash
-cd build && cmake --install . --prefix /usr/local
+# Add as a git submodule (or use vcpkg's builtin registry)
+vcpkg install sendafrica
 ```
 
-Then in the consumer project:
+Then in your CMakeLists.txt:
+
+```cmake
+find_package(sendafrica CONFIG REQUIRED)
+target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
+```
+
+Or add to your `vcpkg.json`:
+
+```json
+{
+    "dependencies": [
+        {
+            "name": "sendafrica",
+            "version>=": "1.0.1"
+        }
+    ]
+}
+```
+
+### 3. Conan
+
+```bash
+conan install sendafrica/1.0.0@ --build=missing
+```
+
+Or add to your `conanfile.txt`:
+
+```ini
+[requires]
+sendafrica/1.0.1
+
+[generators]
+CMakeDeps
+CMakeToolchain
+```
+
+Then:
 
 ```cmake
 find_package(sendafrica REQUIRED)
 target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
 ```
 
+### 4. Build from source
+
+```bash
+git clone https://github.com/SendAfrica/SendAfrica-cpp-sdk.git
+cd SendAfrica-cpp-sdk
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --install .
+```
+
+Then in any project:
+
+```cmake
+find_package(sendafrica REQUIRED)
+target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
+```
+
+## Dependencies
+
+| Dependency | Version | Notes |
+|---|---|---|
+| C++ compiler | C++17 | GCC 8+, Clang 7+, MSVC 2019+ |
+| CMake | >= 3.16 | |
+| libcurl | >= 7.75 | HTTP transport |
+| OpenSSL | >= 3.0 | HMAC-SHA256 for webhooks |
+| nlohmann/json | >= 3.10 | JSON parsing (auto-fetched if missing) |
+
 ## Project layout
 
 ```
 sendafrica-cpp/
 ├── CMakeLists.txt
+├── vcpkg.json
+├── conanfile.py
 ├── cmake/sendafricaConfig.cmake.in
 ├── include/sendafrica/
-│   ├── sendafrica.hpp           # umbrella header
 │   ├── client.hpp
+│   ├── sendafrica.hpp           # umbrella header
 │   ├── http_transport.hpp
 │   ├── exceptions.hpp
 │   ├── models.hpp

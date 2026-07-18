@@ -1,0 +1,22 @@
+{
+    "name": "sendafrica",
+    "version": "1.0.1",
+    "description": "Official C++ SDK for the SendAfrica SMS Infrastructure-as-a-Service API",
+    "homepage": "https://github.com/SendAfrica/SendAfrica-cpp-sdk",
+    "license": "MIT",
+    "supports": "!uwp",
+    "dependencies": [
+        {
+            "name": "curl",
+            "version>=": "7.75.0"
+        },
+        {
+            "name": "nlohmann-json",
+            "version>=": "3.10.0"
+        },
+        {
+            "name": "openssl",
+            "version>=": "3.0.0"
+        }
+    ]
+}
