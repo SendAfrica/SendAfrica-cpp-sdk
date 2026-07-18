@@ -28,7 +28,7 @@ int main() {
 
 | Resource | Methods | Docs |
 |---|---|---|
-| `client.sms()` | `send`, `send_many`, `analyze` | [API Reference](docs/api-reference.md#smsresource) |
+| `client.sms()` | `send`, `send_many`, `analyze`, `status` | [API Reference](docs/api-reference.md#smsresource) |
 | `client.credits()` | `balance`, `history` | [API Reference](docs/api-reference.md#creditsresource) |
 | `client.payments()` | `create`, `rate` | [API Reference](docs/api-reference.md#paymentsresource) |
 | `client.webhooks()` | `parse` | [Webhooks](docs/webhooks.md) |
@@ -145,6 +145,18 @@ try {
 | `WebhookSignatureError` | — | Webhook signature mismatch |
 
 See [Error Handling](docs/errors.md) for full details.
+
+## Delivery Status
+
+Query the delivery status of a sent message by its ID. Messages move through:
+`queued → sent → delivered / failed / undelivered`.
+
+```cpp
+auto result = client.sms().send("0712345678", "Hello!");
+// ... later ...
+auto status = client.sms().status(result.message_id);
+std::cout << status.status << "\n";  // "delivered"
+```
 
 ## Documentation
 

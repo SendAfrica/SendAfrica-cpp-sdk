@@ -32,6 +32,9 @@ public:
     // Local-only, no network call.
     util::SMSAnalysis analyze(const std::string& message) const;
 
+    // Query delivery status by message ID. GET /v1/sms/{id}/status
+    MessageStatus status(const std::string& message_id);
+
 private:
     HttpTransport& transport_;
 };

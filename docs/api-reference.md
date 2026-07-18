@@ -162,6 +162,28 @@ auto a = client.sms().analyze("Hello world");
 
 See [SMS Analysis](sms-analysis.md) for encoding details.
 
+### status()
+
+Query delivery status by message ID. Messages move through:
+`queued → sent → delivered / failed / undelivered`.
+
+```cpp
+MessageStatus status(const std::string& message_id);
+```
+
+| Parameter | Description |
+|---|---|
+| `message_id` | The ID returned by `send()` |
+
+**Returns:** `MessageStatus` with `message_id` and `status`.
+
+```cpp
+auto s = client.sms().status("SA-xxxx-xxxx-xxxx");
+std::cout << s.status << "\n";  // "delivered"
+```
+
+**Throws:** `NotFoundError` (404) if the message ID doesn't exist.
+
 ---
 
 ## CreditsResource
@@ -338,6 +360,13 @@ See [Webhooks](webhooks.md) for full setup guide.
 | `index` | `int` | Index in the original batch |
 | `to` | `string` | Recipient phone |
 | `error` | `string` | Error message |
+
+### MessageStatus
+
+| Field | Type | Description |
+|---|---|---|
+| `message_id` | `string` | The queried message ID |
+| `status` | `string` | `"queued"`, `"sent"`, `"delivered"`, `"failed"`, or `"undelivered"` |
 
 ### CreditBalance
 

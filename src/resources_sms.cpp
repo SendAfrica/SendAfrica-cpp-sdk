@@ -47,4 +47,10 @@ util::SMSAnalysis SMSResource::analyze(const std::string& message) const {
     return util::analyze_sms(message);
 }
 
+MessageStatus SMSResource::status(const std::string& message_id) {
+    util::require_nonempty(message_id, "message_id");
+    auto data = transport_.request("GET", "/sms/" + message_id + "/status");
+    return MessageStatus::from_json(data);
+}
+
 }  // namespace sendafrica

@@ -130,6 +130,18 @@ struct VoucherRate {
     }
 };
 
+struct MessageStatus {
+    std::string message_id;
+    std::string status;
+
+    static MessageStatus from_json(const nlohmann::json& j) {
+        MessageStatus s;
+        s.message_id = j.value("message_id", "");
+        s.status = j.value("status", "");
+        return s;
+    }
+};
+
 struct WebhookEvent {
     std::string type;
     std::optional<std::string> message_id;
