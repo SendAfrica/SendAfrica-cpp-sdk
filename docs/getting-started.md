@@ -52,7 +52,7 @@ target_link_libraries(my_sms_app PRIVATE sendafrica::sendafrica)
 
 int main() {
     // Option 1: pass API key directly
-    sendafrica::Client client("sk_live_xxxxx");
+    sendafrica::Client client("SA-xxxxx");
 
     // Option 2: read from SENDAFRICA_API_KEY environment variable
     // sendafrica::Client client;
@@ -87,7 +87,7 @@ For production, set your API key via environment variable instead of
 hardcoding it:
 
 ```bash
-export SENDAFRICA_API_KEY="sk_live_xxxxx"
+export SENDAFRICA_API_KEY="SA-xxxxx"
 ./my_sms_app
 ```
 

@@ -1,7 +1,7 @@
 #pragma once
 // sendafrica::Client — the main entry point of the SDK.
 //
-//   sendafrica::Client client("sk_live_xxxxx");
+//   sendafrica::Client client("SA-xxxxx");
 //   auto result = client.sms().send("0712345678", "Welcome to SendAfrica");
 
 #include "sendafrica/http_transport.hpp"

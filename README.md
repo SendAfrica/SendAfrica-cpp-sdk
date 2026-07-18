@@ -15,7 +15,7 @@ Designed to feel like [Stripe's C++ libraries](https://github.com/stripe/stripe-
 #include <iostream>
 
 int main() {
-    sendafrica::Client client("sk_live_xxxxx");
+    sendafrica::Client client("SA-xxxxx");
 
     auto result = client.sms().send("0712345678", "Welcome to SendAfrica");
     std::cout << result.message_id << "\n";       // "SA-xxxx-xxxx-xxxx"
@@ -104,7 +104,7 @@ opts.max_retries = 5;           // default 3
 opts.debug = true;              // log to stderr
 opts.webhook_secret = "whsec_...";
 
-sendafrica::Client client("sk_live_xxxxx", opts);
+sendafrica::Client client("SA-xxxxx", opts);
 ```
 
 | Option | Type | Default | Description |
