@@ -1,64 +1,41 @@
 # SendAfrica C++ SDK
 
-C++17 client for the SendAfrica SMS Infrastructure-as-a-Service API. Mirrors
-the [Python SDK](../python)'s resource design (`sms`, `credits`, `payments`,
-`webhooks`) with the same phone normalization and GSM-7/UCS-2 SMS analysis
-logic, built on `libcurl` + `nlohmann/json` + `OpenSSL`.
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/SendAfrica/SendAfrica-cpp-sdk)
+[![C++ Standard](https://img.shields.io/badge/C++-17-green.svg)](https://en.cppreference.com/w/cpp/17)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
+
+Official C++17 client for the [SendAfrica](https://sendafrica.online) SMS Infrastructure-as-a-Service API.
+
+Designed to feel like [Stripe's C++ libraries](https://github.com/stripe/stripe-cpp): simple for a first integration, enough control for production use. Mirrors the [Python SDK](https://github.com/SendAfrica/SendAfrica-python-sdk)'s resource design with the same phone normalization and GSM-7/UCS-2 SMS analysis logic.
 
 ## Quickstart
 
 ```cpp
-#include <sendafrica/client.hpp>
+#include <sendafrica/sendafrica.hpp>
+#include <iostream>
 
 int main() {
     sendafrica::Client client("sk_live_xxxxx");
+
     auto result = client.sms().send("0712345678", "Welcome to SendAfrica");
-    // result.message_id, result.status, result.credits_used
+    std::cout << result.message_id << "\n";       // "SA-xxxx-xxxx-xxxx"
+    std::cout << result.status << "\n";           // "Success"
+    std::cout << result.credits_used << "\n";     // 1
 }
-```
-
-The API key can also come from the `SENDAFRICA_API_KEY` environment
-variable — pass `std::nullopt` as the constructor's first argument.
-
-```cpp
-sendafrica::ClientOptions opts;
-opts.timeout_seconds = 30;
-opts.max_retries = 3;
-opts.debug = true;
-sendafrica::Client client(std::nullopt, opts);
 ```
 
 ## Resources
 
-```cpp
-client.sms().send(to, message, sender);
-client.sms().send_many(items, sender, rate_limit_per_sec);
-client.sms().analyze(message);          // local-only, no network call
-
-client.credits().balance();
-client.credits().history(page, per_page);
-
-client.payments().create(amount, provider, phone);
-client.payments().rate();               // fetch tiered pricing schedule
-
-client.webhooks().parse(payload, signature, secret);  // HMAC-SHA256 verified
-```
-
-`payments.get()` and `payments.list()` don't exist: the API only exposes
-`POST /v1/vouchers` (create) and `GET /v1/vouchers/rate` (pricing) to API
-key callers — order lookup/listing is an admin-console (JWT) feature.
-
-All errors derive from `sendafrica::Error` (`AuthenticationError`,
-`ValidationError`, `InvalidPhoneError`, `InsufficientCreditsError`,
-`RateLimitError`, `NotFoundError`, `ServerError`, `ConnectionError`,
-`WebhookSignatureError`).
+| Resource | Methods | Docs |
+|---|---|---|
+| `client.sms()` | `send`, `send_many`, `analyze` | [API Reference](docs/api-reference.md#smsresource) |
+| `client.credits()` | `balance`, `history` | [API Reference](docs/api-reference.md#creditsresource) |
+| `client.payments()` | `create`, `rate` | [API Reference](docs/api-reference.md#paymentsresource) |
+| `client.webhooks()` | `parse` | [Webhooks](docs/webhooks.md) |
 
 ## Installation
 
 ### 1. CMake FetchContent (recommended)
-
-No package manager needed. CMake pulls the source and builds it alongside
-your project.
 
 ```cmake
 include(FetchContent)
@@ -73,48 +50,19 @@ target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
 ### 2. vcpkg
 
 ```bash
-# Add as a git submodule (or use vcpkg's builtin registry)
 vcpkg install sendafrica
 ```
-
-Then in your CMakeLists.txt:
 
 ```cmake
 find_package(sendafrica CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
 ```
 
-Or add to your `vcpkg.json`:
-
-```json
-{
-    "dependencies": [
-        {
-            "name": "sendafrica",
-            "version>=": "1.0.1"
-        }
-    ]
-}
-```
-
 ### 3. Conan
 
 ```bash
-conan install sendafrica/1.0.0@ --build=missing
+conan install sendafrica/1.0.1@ --build=missing
 ```
-
-Or add to your `conanfile.txt`:
-
-```ini
-[requires]
-sendafrica/1.0.1
-
-[generators]
-CMakeDeps
-CMakeToolchain
-```
-
-Then:
 
 ```cmake
 find_package(sendafrica REQUIRED)
@@ -131,13 +79,6 @@ cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
 cmake --install .
 ```
 
-Then in any project:
-
-```cmake
-find_package(sendafrica REQUIRED)
-target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
-```
-
 ## Dependencies
 
 | Dependency | Version | Notes |
@@ -148,32 +89,125 @@ target_link_libraries(your_app PRIVATE sendafrica::sendafrica)
 | OpenSSL | >= 3.0 | HMAC-SHA256 for webhooks |
 | nlohmann/json | >= 3.10 | JSON parsing (auto-fetched if missing) |
 
-## Project layout
+### Debian/Ubuntu
+
+```bash
+sudo apt-get install cmake g++ libcurl4-openssl-dev libssl-dev
+```
+
+## Configuration
+
+```cpp
+sendafrica::ClientOptions opts;
+opts.timeout_seconds = 30;      // default 10
+opts.max_retries = 5;           // default 3
+opts.debug = true;              // log to stderr
+opts.webhook_secret = "whsec_...";
+
+sendafrica::Client client("sk_live_xxxxx", opts);
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `base_url` | `string` | `https://api.sendafrica.online/v1` | API endpoint |
+| `timeout_seconds` | `double` | `10.0` | Request timeout |
+| `max_retries` | `int` | `3` | Retries on 429/5xx |
+| `environment` | `string` | `"production"` | Environment label |
+| `debug` | `bool` | `false` | Log requests |
+| `webhook_secret` | `optional<string>` | `nullopt` | Webhook HMAC secret |
+
+## Error Handling
+
+All errors derive from `sendafrica::Error`:
+
+```cpp
+try {
+    client.sms().send("0712345678", "Hello");
+} catch (const sendafrica::AuthenticationError& e) {
+    std::cerr << "Bad API key: " << e.message() << "\n";
+} catch (const sendafrica::RateLimitError& e) {
+    std::cerr << "Rate limited, retry after " << *e.retry_after() << "s\n";
+} catch (const sendafrica::Error& e) {
+    std::cerr << e.message() << " (HTTP " << *e.status_code() << ")\n";
+}
+```
+
+| Exception | HTTP Status | Meaning |
+|---|---|---|
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `ValidationError` | 400, 422 | Bad request payload |
+| `InvalidPhoneError` | — | Phone number failed validation |
+| `InsufficientCreditsError` | 402 | Not enough SMS credits |
+| `RateLimitError` | 429 | Too many requests |
+| `NotFoundError` | 404 | Resource not found |
+| `ServerError` | 5xx | API server error |
+| `ConnectionError` | — | Network/timeout failure |
+| `WebhookSignatureError` | — | Webhook signature mismatch |
+
+See [Error Handling](docs/errors.md) for full details.
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [Getting Started](docs/getting-started.md) | First SMS in 5 minutes |
+| [API Reference](docs/api-reference.md) | All types, methods, and parameters |
+| [Error Handling](docs/errors.md) | Exception hierarchy and retry logic |
+| [Phone Normalization](docs/phone-normalization.md) | E.164 number formats |
+| [SMS Analysis](docs/sms-analysis.md) | GSM-7/UCS-2 encoding detection |
+| [Webhooks](docs/webhooks.md) | Incoming event verification |
+
+## Test App
+
+A ready-to-run test app is available at [SendAfrica/SendAfrica-cpp-test](https://github.com/SendAfrica/SendAfrica-cpp-test).
+
+```bash
+git clone https://github.com/SendAfrica/SendAfrica-cpp-test.git
+cd SendAfrica-cpp-test
+cp .env.example .env    # add your API key
+cmake -B build -S .
+cmake --build build
+./build/sendafrica_test
+```
+
+## Project Layout
 
 ```
 sendafrica-cpp/
-├── CMakeLists.txt
-├── vcpkg.json
-├── conanfile.py
-├── cmake/sendafricaConfig.cmake.in
+├── CMakeLists.txt                  # build + install/export
+├── vcpkg.json                      # vcpkg manifest
+├── conanfile.py                    # Conan recipe
+├── cmake/sendafricaConfig.cmake.in # find_package config
 ├── include/sendafrica/
-│   ├── client.hpp
-│   ├── sendafrica.hpp           # umbrella header
-│   ├── http_transport.hpp
-│   ├── exceptions.hpp
-│   ├── models.hpp
-│   ├── resources.hpp
-│   ├── auth.hpp
-│   └── util.hpp
-├── src/
-├── tests/test_local.cpp
-└── examples/basic_send.cpp
+│   ├── sendafrica.hpp              # umbrella header
+│   ├── client.hpp                  # Client, ClientOptions
+│   ├── http_transport.hpp          # HTTP layer (libcurl)
+│   ├── exceptions.hpp              # error hierarchy
+│   ├── models.hpp                  # response structs
+│   ├── resources.hpp               # SMS, Credits, Payments, Webhooks
+│   ├── auth.hpp                    # API key resolution
+│   └── util.hpp                    # phone normalization, SMS analysis
+├── src/                            # implementation files
+├── docs/                           # documentation
+├── tests/test_local.cpp            # local unit tests
+└── examples/basic_send.cpp         # usage example
 ```
 
-## Roadmap (mirrors the Python SDK)
+## SDK Ecosystem
 
-- **Phase 1 (done):** client, auth, SMS send/send_many/analyze, credits,
-  payments/vouchers, error tree, webhook verification
-- **Phase 2:** async variant (libcurl multi-interface or a coroutine
-  wrapper), CLI, bulk-send polish
+| Language | Package Manager | Repository |
+|---|---|---|
+| Python | PyPI (`pip install sendafrica`) | [SendAfrica-python-sdk](https://github.com/SendAfrica/SendAfrica-python-sdk) |
+| C++ | GitHub + vcpkg + Conan | [SendAfrica-cpp-sdk](https://github.com/SendAfrica/SendAfrica-cpp-sdk) |
+| TypeScript | npm | [SendAfrica-ts-sdk](https://github.com/SendAfrica/SendAfrica-ts-sdk) |
+| Go | Go Modules | [SendAfrica-go-sdk](https://github.com/SendAfrica/SendAfrica-go-sdk) |
+
+## Roadmap
+
+- **Phase 1 (done):** client, auth, SMS send/send_many/analyze, credits, payments/vouchers, error tree, webhook verification
+- **Phase 2:** async variant (libcurl multi-interface or coroutine wrapper), CLI, bulk-send polish
 - **Phase 3:** campaigns, contacts, templates, scheduling
+
+## License
+
+MIT
