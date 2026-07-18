@@ -87,7 +87,7 @@ HttpTransport::RawResponse HttpTransport::perform_once(const std::string& method
 
     RawResponse resp;
     struct curl_slist* headers = nullptr;
-    headers = curl_slist_append(headers, ("Authorization: Bearer " + api_key_).c_str());
+    headers = curl_slist_append(headers, ("X-API-Key: " + api_key_).c_str());
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "User-Agent: sendafrica-cpp/1.0");
     headers = curl_slist_append(headers, ("X-Request-Id: " + request_id).c_str());

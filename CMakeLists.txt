@@ -15,6 +15,14 @@ include(FetchContent)
 # --- Dependencies -----------------------------------------------------------
 
 find_package(CURL REQUIRED)
+if(TARGET CURL::libcurl)
+    get_target_property(_curl_loc CURL::libcurl IMPORTED_LOCATION)
+    if(NOT _curl_loc)
+        set_target_properties(CURL::libcurl PROPERTIES
+            IMPORTED_LOCATION "${CURL_LIBRARIES}"
+        )
+    endif()
+endif()
 find_package(OpenSSL REQUIRED)
 
 # nlohmann/json: prefer an already-installed system package (apt/vcpkg/conan),
